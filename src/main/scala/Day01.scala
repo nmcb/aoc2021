@@ -1,7 +1,4 @@
 import scala.io._
-import scala.annotation.tailrec
-import scala.util.control.Breaks._
-import scala.collection._
 
 object Day01 extends App {
 
