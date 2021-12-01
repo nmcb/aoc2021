@@ -11,13 +11,8 @@ object Day01 extends App {
       .map(_.trim.toInt)
       .toList
   
-  def incs(l: List[Int], n: Int = 0, p: Int = 0): Int =
-    if (l.isEmpty)
-      n - 1
-    else if (l.head > p)
-      incs(l.tail, n + 1, l.head)
-    else
-      incs(l.tail, n, l.head)
+  def incs(l: List[Int]): Int =
+    l.sliding(2).count(l => l(1) > l(0))
 
   println(s"Answer part 1: ${incs(depths)} [${System.currentTimeMillis - start1}ms]")
 
