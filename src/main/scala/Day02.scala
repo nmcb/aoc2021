@@ -1,41 +1,44 @@
 import scala.io._
 
-object Day02 extends App {
+object Day02 extends App:
+  val start = System.currentTimeMillis
 
-  val start1 = System.currentTimeMillis
+  sealed abstract class Inst(delta: Long)
+  case class Up(delta: Long)      extends Inst(delta)
+  case class Down(delta: Long)    extends Inst(delta)
+  case class Forward(delta: Long) extends Inst(delta)
 
-  enum Dir(delta: Int):
-    case Up(delta: Int)      extends Dir(delta)
-    case Down(delta: Int)    extends Dir(delta)
-    case Forward(delta: Int) extends Dir(delta)
+  object Inst:
+    def fromLine(l: String): Inst =
+      l.split(" ").toList match
+        case command :: d :: Nil if command.startsWith("up")      => Up(d.toLong)
+        case command :: d :: Nil if command.startsWith("down")    => Down(d.toLong)
+        case command :: d :: Nil if command.startsWith("forward") => Forward(d.toLong)
+        case _ => sys.error(s"error parsing line: $l")
 
-  import Dir._
+  case class Sub(heading: Long = 0, depth: Long = 0, aim: Long = 0):
+    def move(is: List[Inst]): Sub =
+      is.foldLeft(this)((cur,is) => is match
+        case Up(d) =>
+          cur.copy( aim = cur.aim - d)
+        case Down(d) =>
+          cur.copy( aim = cur.aim + d)
+        case Forward(d) =>
+          cur.copy( heading = cur.heading + d, depth = cur.depth + (cur.aim * d)))
 
-  case class Loc(heading: Int = 0, depth: Int = 0, aim: Int = 0)
+  object Sub {
+    def init: Sub = Sub()
+  }
 
-  val input =
+  val instructions: List[Inst] =
     Source
       .fromFile("src/resources/input02.txt")
       .getLines
-      .map(_.split(" ").toList match {
-        case "up"      :: (d: String) :: Nil => Up(d.toInt)
-        case "down"    :: (d: String) :: Nil => Down(d.toInt)
-        case "forward" :: (d: String) :: Nil => Forward(d.toInt)
-        case l => sys.error(s"error parsing line: $l")
-      })
+      .map(Inst.fromLine)
       .toList
 
-  def move(is: List[Dir], init: Loc = Loc()): Loc =
-    is.foldLeft(init)((cur,is) => is match {
-      case Up(d)      => Loc(cur.heading, cur.depth, cur.aim - d)
-      case Down(d)    => Loc(cur.heading, cur.depth, cur.aim + d)
-      case Forward(d) => Loc(cur.heading + d, cur.depth + (cur.aim * d), cur.aim)
-    })
-
-  val answer1: Int =
-    val p = move(input)
-    p.heading * p.depth
+  val answer: Long =
+    val sub = Sub.init.move(instructions)
+    sub.heading * sub.depth
   
-  println(s"Answer part 1: ${answer1} [${System.currentTimeMillis - start1}ms]")
-
-}
+  println(s"Answer: ${answer} [${System.currentTimeMillis - start}ms]")
