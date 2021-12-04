@@ -29,14 +29,13 @@ object Day03 extends App:
   println(s"Answer 1 = ${gamma * epsilon} [${System.currentTimeMillis - start}ms]")
 
 
-  def find(nums: List[List[Char]], idx: Int = 0)(f: List[Char] => Char): Int =
-    val columns = nums.transpose
-    val common  = f(columns(idx))
-    val next    = nums.filter(num => num(idx) == common)
+  def find(bits: List[List[Char]], idx: Int = 0)(commonOf: List[Char] => Char): Int =
+    val next =
+      bits.filter(bit => bit(idx) == commonOf(diagnostics.transpose.apply(idx)))
     if (next.length == 1)
       Integer.parseInt(next.head.mkString, 2)
     else
-      find(next, idx + 1)(f)
+      find(next, idx + 1)(commonOf)
 
   val oxygenRating       = find(diagnostics)(mostCommon)
   val co2SchrubberRating = find(diagnostics)(leastCommon)
