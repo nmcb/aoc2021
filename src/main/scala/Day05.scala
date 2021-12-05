@@ -1,78 +1,33 @@
 import scala.io._
+import scala.runtime.stdLibPatches.language.experimental.saferExceptions
 
 object Day05 extends App:
-  val start = System.currentTimeMillis
+  val start   = System.currentTimeMillis
+  val LineLit = """(\d+),(\d+) -> (\d+),(\d+)""".r 
 
-  val LineLit =
-    """(\d+),(\d+) -> (\d+),(\d+)""".r 
-
-  def lines =
+  def lines: Set[Line] =
     Source
       .fromFile("src/resources/input05.txt")
       .getLines
-      .toList
       .map(_.trim)
-      .map {
-        case LineLit(x0, y0, x1, y1) =>
-          Line(Coord(x0.toInt, y0.toInt), Coord(x1.toInt, y1.toInt))
-      }
-        
-  case class Coord(x: Int, y: Int)
+      .map { case LineLit(x0, y0, x1, y1) => Line(x0.toInt, y0.toInt, x1.toInt, y1.toInt) }
+      .toSet
+      
+  case class Line(x0: Int, y0: Int, x1: Int, y1: Int):
+    val maxX: Int = math.max(x0, x1)
+    val maxY: Int = math.max(y0, y1)
+    val minX: Int = math.min(x0, x1)
+    val minY: Int = math.min(y0, y1)
+    val deltaX: Int = if (x0 < x1) 1 else if (x0 > x1) -1 else 0
+    val deltaY: Int = if (y0 < y1) 1 else if (y0 > y1) -1 else 0
+    val steps: Range = (0 to math.max(maxX - minX, maxY - minY))
+    val points: Set[(Int,Int)] = steps.map(n => (x0 + (n * deltaX), y0 + (n * deltaY))).toSet
+    def on(x: Int, y: Int): Boolean = steps.exists(n => (x == x0 + (n * deltaX)) && (y == y0 + (n * deltaY)))
 
-  case class Line(start: Coord, end: Coord):
-    val maxX: Int =
-      List(start.x, end.x).max
-    val maxY: Int =
-      List(start.y, end.y).max
-    val minX: Int =
-      List(start.x, end.x).min
-    val minY: Int =
-      List(start.y, end.y).min
-    val isHorizontal: Boolean =
-      start.y == end.y
-    val isVertical: Boolean =
-      start.x == end.x
+  case class Floor(lines: Set[Line]):
+    val crossings: Int = lines.flatMap(l => l.points).count((x, y) => lines.count(_.on(x, y)) >= 2)
 
-  case class Floor(lines: Map[Coord, Int]):
-    val crossings: Int =
-      lines.filter((coord,count) => count >= 2).size
-
-  object Floor:
-    def toCoords(l: Line): Set[Coord] =
-      if (l.isHorizontal)
-        if (l.end.x >= l.start.x)
-          (l.start.x to l.end.x).map(Coord(_, l.start.y)).toSet
-        else 
-          (l.end.x to l.start.x).map(Coord(_, l.start.y)).toSet
-      else if (l.isVertical)
-        if (l.end.y >= l.start.y)
-          (l.start.y to l.end.y).map(Coord(l.start.x, _)).toSet
-        else
-          (l.end.y to l.start.y).map(Coord(l.start.x, _)).toSet
-      else
-        (0 to (l.maxX - l.minX)).map(n =>
-          if (l.end.x > l.start.x)
-            if (l.end.y > l.start.y)
-              Coord(l.start.x + n, l.start.y + n)
-            else
-              Coord(l.start.x + n, l.start.y - n)
-          else
-            if (l.end.y > l.start.y)
-              Coord(l.start.x - n, l.start.y + n)
-            else
-              Coord(l.start.x - n, l.start.y - n)
-        ).toSet
-
-    def apply(lines: List[Line]): Floor =
-      Floor(lines.foldLeft(Map.empty[Coord,Int])((acc,line) =>
-        val coords = toCoords(line)
-        val added  = (coords diff acc.keySet).map(c => c -> 1)
-        val update = (acc.keySet intersect coords).map(c => c -> (acc(c) + 1))
-        val result = acc ++ added ++ update
-        result
-        ))
-
-  val answer =
-    Floor(lines).crossings
+  val answer = Floor(lines).crossings
 
   println(s"Answer = ${answer} [${System.currentTimeMillis - start}ms]")
+  assert(answer == 20271)
