@@ -1,5 +1,4 @@
 import scala.io._
-import scala.runtime.stdLibPatches.language.experimental.saferExceptions
 
 object Day05 extends App:
   val start   = System.currentTimeMillis
