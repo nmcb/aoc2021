@@ -29,6 +29,7 @@ object Day04 extends App:
         case ((_,_),_) =>
           sys.error("boom!")
       }._1
+      
   case class Board[A](rows: List[List[A]], draws: List[A] = List.empty):
     def addRow(row: List[A]): Board[A] =
       copy(rows = rows :+ row)
