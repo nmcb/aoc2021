@@ -23,18 +23,18 @@ object Day06 extends App:
         .map((timeToSpawn,count) => (timeToSpawn - 1) -> count)
     val spawnCount =
       aged.getOrElse(SpawnNow, 0L)
-    val spawnIn6Count =
+    val timeToSpawnCount =
       aged.getOrElse(TimeToSpawn, 0L) + spawnCount
 
     aged.removed(SpawnNow) +
       (InitTimeToSpawn -> spawnCount) +
-      (TimeToSpawn -> spawnIn6Count)
+      (TimeToSpawn -> timeToSpawnCount)
 
   val answer =
-    println(s"Init population count ${init.values.sum}")
+    println(s"Init generation count ${init.values.sum}")
     (1 to 256).foldLeft(init)((gen,year) =>
       val next = cycle(gen)
-      println(s"\u001b[FYear $year, population count ${next.values.sum}")
+      println(s"\u001b[FYear $year, generation count ${next.values.sum}")
       next
     ).values.sum
 
