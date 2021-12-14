@@ -1,7 +1,6 @@
 import scala.io._
 
 object Day14 extends App:
-  val start = System.currentTimeMillis
 
   val lines: List[String] =
     Source
@@ -13,7 +12,8 @@ object Day14 extends App:
     lines.head.trim
 
   val rules: Map[(Char, Char), Char] =
-    lines.drop(2)
+    lines
+      .drop(2)
       .map( line =>
         val Array(pair,insert) = line.trim.split("->").map(_.trim)
         (pair(0), pair(1)) -> insert.head
@@ -49,9 +49,16 @@ object Day14 extends App:
   val initCounts: Map[Char, Long] =
     template.groupMapReduce(identity)(_ => 1L)(_ + _)
         
-  val (pairs, counts) =
-    (1 to 40).foldLeft((initPairs, initCounts))({
-      case ((pairs,counts), index) => next(pairs, counts)
-    })
+  val start = System.currentTimeMillis
 
-  println(max(counts) - min(counts))
+  val (pairs1, counts1) = (1 to 10).foldLeft((initPairs, initCounts))({
+    case ((pairs,counts), index) => next(pairs, counts)
+  })
+
+  println(s"Answer 1 = ${max(counts1) - min(counts1)} [${System.currentTimeMillis - start}ms]")
+
+  val (pairs2, counts2) = (1 to 30).foldLeft((pairs1, counts1))({
+    case ((pairs,counts), index) => next(pairs, counts)
+  })
+
+  println(s"Answer 2 = ${max(counts2) - min(counts2)} [${System.currentTimeMillis - start}ms]")
