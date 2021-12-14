@@ -2,11 +2,11 @@ import scala.io._
 
 object Day14 extends App:
 
-  val lines: List[String] =
+  val lines: Seq[String] =
     Source
       .fromFile("src/resources/input14.txt")
       .getLines
-      .toList
+      .toSeq
 
   val template: String =
     lines.head.trim
@@ -16,30 +16,28 @@ object Day14 extends App:
       .drop(2)
       .map( line =>
         val Array(pair,insert) = line.trim.split("->").map(_.trim)
-        (pair(0), pair(1)) -> insert.head
+        (pair.charAt(0), pair.charAt(1)) -> insert.charAt(0)
       )
       .toMap
 
-  def next(pairs: Map[(Char, Char), Long], counts: Map[Char, Long]): (Map[(Char, Char), Long], Map[Char, Long]) =
-    val npairs: Map[(Char, Char), Long] =
-      pairs.toList.flatMap({ case (pair@(a, b), count) =>
+  def fst[A](pair: (A, _)): A =
+    pair._1
+
+  def snd[B](pair: (_, B)): B =
+    pair._2
+
+  def step(pairs: Map[(Char, Char), Long], counts: Map[Char, Long]): (Map[(Char, Char), Long], Map[Char, Long]) =
+    ( pairs.toSeq.flatMap((pair, count) =>
         val c = rules(pair)
-        List((a, c) -> count, (c, b) -> count)
-      }).groupMapReduce(_._1)(_._2)(_+_)
+        Seq((fst(pair), c) -> count, (c, snd(pair)) -> count)
+      ).groupMapReduce(fst)(snd)(_ + _)
+    , pairs.foldLeft(counts)((acc, count) =>
+        val char = rules(fst(count))
+        acc.updated(char, acc.getOrElse(char, 0L) + snd(count))
+      ).groupMapReduce(fst)(snd)(_ + _) 
+    )
 
-    val ncounts: Map[Char, Long] =
-      pairs.foldLeft(counts)({ case (acc, (pair@(a, b), count)) =>
-        val char = rules(pair)
-        acc.updated(char, acc.getOrElse(char, 0L) + count)
-      }).groupMapReduce(_._1)(_._2)(_+_) 
-
-    (npairs, ncounts)
-
-  def max(counts: Map[Char, Long]) =
-    counts.values.max
     
-  def min(counts: Map[Char, Long]) =
-    counts.values.min
 
   val initPairs: Map[(Char, Char), Long] =
     template
@@ -49,16 +47,25 @@ object Day14 extends App:
   val initCounts: Map[Char, Long] =
     template.groupMapReduce(identity)(_ => 1L)(_ + _)
         
-  val start = System.currentTimeMillis
+  def max(counts: Map[Char, Long]) =
+    counts.values.max
+    
+  def min(counts: Map[Char, Long]) =
+    counts.values.min
 
-  val (pairs1, counts1) = (1 to 10).foldLeft((initPairs, initCounts))({
-    case ((pairs,counts), index) => next(pairs, counts)
-  })
+  val start: Long =
+    System.currentTimeMillis
+
+  val (pairs1, counts1) =
+    (1 to 10).foldLeft((initPairs, initCounts)) {
+      case ((pairs,counts), index) => step(pairs, counts)
+    }
 
   println(s"Answer 1 = ${max(counts1) - min(counts1)} [${System.currentTimeMillis - start}ms]")
 
-  val (pairs2, counts2) = (1 to 30).foldLeft((pairs1, counts1))({
-    case ((pairs,counts), index) => next(pairs, counts)
-  })
+  val (pairs2, counts2) =
+    (1 to 30).foldLeft((pairs1, counts1)) {
+      case ((pairs,counts), index) => step(pairs, counts)
+    }
 
   println(s"Answer 2 = ${max(counts2) - min(counts2)} [${System.currentTimeMillis - start}ms]")
