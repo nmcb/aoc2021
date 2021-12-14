@@ -61,14 +61,5 @@ object Day14 extends App:
 
   val poly = Poly(lpairs, lcounts, lrules)
 
-  println(s"[0] ${poly.ucounts}")
-  println(s"pairs: ${poly.upairs}")
-  val result = (1 to 40).foldLeft(poly)((p,i) =>
-    val next = p.next
-    println(s"[$i] ${next.ucounts}")
-    println(s"pairs: ${next.upairs}")
-    next
-  )
+  val result = (1 to 40).foldLeft(poly)((p,i) => p.next)
   println(result.max - result.min)
-    
-  // println(s"Answer 2 = ${answer2.last._2 - answer2.head._2} [${System.currentTimeMillis - start}ms]")
