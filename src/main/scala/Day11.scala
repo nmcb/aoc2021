@@ -5,8 +5,6 @@ import scala.quoted.Expr
 object Day11 extends App:
   val start = System.currentTimeMillis
 
-  def ﷽[A](a: A): A = a
-
   val octos =
     Octopuses(Source
       .fromFile("src/resources/input11.txt")
