@@ -36,12 +36,13 @@ object Day10 extends App:
         case Some(']') => 57L
         case Some('}') => 1197L
         case Some('>') => 25137L
+        case _ => sys.error(s"boom!")
       }
       .groupMapReduce(identity)(identity)(_+_)
       .values.sum
 
   println(s"Answer 1 = ${answer1} [${System.currentTimeMillis - start}ms]")
-  // assert(answer1 == 26397)
+  assert(answer1 == 268845)
 
   def loop2(s: String, cur: List[Char] = List.empty[Char]): List[Char] =
     if (s.isEmpty && cur.isEmpty) Nil else {
@@ -61,15 +62,14 @@ object Day10 extends App:
 
   val answer2 =
     val scores = lines.map(loop2(_)).filterNot(_.isEmpty).map { stack =>
-      val score = stack.foldLeft(0L)((res,c) => c match {
+      stack.foldLeft(0L)((res,c) => c match {
         case '(' => (res * 5) + 1
         case '[' => (res * 5) + 2
         case '{' => (res * 5) + 3
         case '<' => (res * 5) + 4
       })
-      println(s"${stack.mkString("")} => $score")
-      score
     }.sorted
     scores(scores.length / 2)
 
   println(s"Answer 2 = ${answer2} [${System.currentTimeMillis - start}ms]")
+  assert(answer2 == 4038824534L)
