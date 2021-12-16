@@ -53,7 +53,6 @@ object Day15 extends App:
       val sortByWeight: Ordering[(Vertex, Int)] = (a, b) => a._2.compareTo(b._2)
       val queue = mutable.PriorityQueue[(Vertex, Int)](sourceDist)(sortByWeight)
 
-      var count = 0
       while (queue.nonEmpty) {
         val (minDestV, _) = queue.dequeue()
         val edges = adjecent.getOrElse(minDestV, List.empty)
@@ -66,10 +65,6 @@ object Day15 extends App:
             edgeTo(e.to) = e
             if (!queue.exists(_._1 == e.to)) queue.enqueue((e.to, riskToTo))
         }
-        count += 1
-        if (count > 10000)
-          println(s"\u001b[FQueue size: ${queue.size}")
-          count = 0
       }
       Calc(edgeTo.toMap, distTo.toMap)
 
