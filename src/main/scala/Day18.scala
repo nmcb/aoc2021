@@ -13,11 +13,11 @@ object Day18 extends App:
 
     case class Val(value: Long, depth: Int, index: Int)
 
-    def values: Iterator[Val] =
-      def go(n: Num, d: Int): Iterator[(Long, Int)] =
+    def values: List[Val] =
+      def go(n: Num, d: Int): List[(Long, Int)] =
         n match
           case Pair(l, r) => go(l, d + 1) ++ go(r, d + 1)
-          case Lit(value) => Iterator((value, d - 1))
+          case Lit(value) => List((value, d - 1))
       go(this, 0).zipWithIndex.map {
         case ((v, d), i) => Val(v, d, i)
       }
@@ -25,23 +25,13 @@ object Day18 extends App:
     def +(that: Num): Num =
       Pair(this, that).reduce
 
-    def addl(value: Long, index: Int): Num =
-      values.takeWhile(_.index < index).toSeq.lastOption match
-        case Some(Val(_, _, i)) => update(value, i)
-        case None               => this
-
-    def addr(value: Long, index: Int): Num =
-      values.dropWhile(_.index <= index).toSeq.headOption match
-        case Some(Val(_, _, i)) => update(value, i)
-        case None               => this
-
     def update(add: Long, index: Int): Num =
       def go(ix: Int, num: Num): (Int, Num) =
         num match
           case Pair(l, r) =>
-            val (li, ln) = go(ix, l)
-            val (ri, rn) = go(li, r)
-            (ri, Pair(ln, rn))
+            val (li, nl) = go(ix, l)
+            val (ri, nr) = go(li, r)
+            (ri, Pair(nl, nr))
           case Lit(v) =>
             (ix + 1, Lit(if ix == index then v + add else v))
       go(0, this)._2
@@ -63,13 +53,23 @@ object Day18 extends App:
         case _ =>
           None
 
+    def addl(value: Long, index: Int): Num =
+      values.takeWhile(_.index < index).toSeq.lastOption match
+        case Some(Val(_, _, i)) => update(value, i)
+        case None               => this
+
+    def addr(value: Long, index: Int): Num =
+      values.dropWhile(_.index <= index).toSeq.headOption match
+        case Some(Val(_, _, i)) => update(value, i)
+        case None               => this
+
     def fix(index: Int): Num =
       def go(ix: Int, depth: Int, num: Num): (Int, Num) =
         num match
           case Pair(l, r) =>
-            val (li, ln) = go(ix, depth + 1, l)
-            val (ri, rn) = go(li, depth + 1, r)
-            (ri, if ix == index && depth == 4 then Lit(0) else Pair(ln, rn))
+            val (li, nl) = go(ix, depth + 1, l)
+            val (ri, nr) = go(li, depth + 1, r)
+            (ri, if ix == index && depth == 4 then Lit(0) else Pair(nl, nr))
           case Lit(v) => (ix + 1, Lit(v))
       go(0, 0, this)._2
 
@@ -123,3 +123,11 @@ object Day18 extends App:
 
   println(s"answer 2: $answer2 [${System.currentTimeMillis - start}ms]")
   assert(answer2 == 4669)
+
+  import parsing.*
+  import P.*    
+
+  def test: P[String] =
+    P(s => (char('0') | char('1')).iff(_ == '1')(string("=true"))(string("=false")).parse(s))
+  assert(run(test)("0=false") == "=false")
+  assert(run(test)("1=true")  == "=true")

@@ -38,6 +38,9 @@ case class P[A](parse: String => Option[(A,String)]) {
     P(s => parse(s).flatMap((a,ss) => Some(loop(ss, List(a)))))
   }
 
+  def iff[B](p: A => Boolean)(t: P[B])(f: => P[B]): P[B] =
+    P(s => parse(s).flatMap((a,ss) => if (p(a)) t.parse(ss) else f.parse(ss)))
+
   def chainl1[B >: A](opp: P[B => A => A]): P[B] = {
     def rest(lhs: B): P[B] = {
       val result = for {
@@ -74,7 +77,7 @@ object P {
     take.flatMap(c => if p(c) then unit(c) else fail)
 
   def end: P[Boolean] =
-    P(s => if (s.nonEmpty) Some(true, s) else Some(false, s))
+    P(s => if (s.isEmpty) Some(true, "") else Some(false, s))
 
   def digit: P[Char] =
     satisfy(_.isDigit)
