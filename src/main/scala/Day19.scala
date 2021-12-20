@@ -43,12 +43,14 @@ object Day19 extends App:
 
   def orientations(pos: Vec): Seq[Vec] =
     val (x, y, z) = pos
-    Seq( (+x,+y,+z),(-y,+x,+z),(-x,-y,+z),(+y,-x,+z)
+    Seq(
+         (+x,+y,+z),(-y,+x,+z),(-x,-y,+z),(+y,-x,+z)
        , (-x,+y,-z),(+y,+x,-z),(+x,-y,-z),(-y,-x,-z)
        , (-z,+y,+x),(-z,+x,-y),(-z,-y,-x),(-z,-x,+y)
        , (+z,+y,-x),(+z,+x,+y),(+z,-y,+x),(+z,-x,-y)
        , (+x,-z,+y),(-y,-z,+x),(-x,-z,-y),(+y,-z,-x)
-       , (+x,+z,-y),(-y,+z,-x),(-x,+z,+y),(+y,+z,+x) )
+       , (+x,+z,-y),(-y,+z,-x),(-x,+z,+y),(+y,+z,+x)
+       )
 
   def find(beacons: Set[Vec], scanner: Scanner): Option[(Set[Vec], Vec)] =
     import Vec.*
