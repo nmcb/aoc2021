@@ -28,8 +28,8 @@ object Day20 extends App:
         for ((_, x) <- row.zipWithIndex) yield
           val pos  = Pos(x, y)
           val area = offsets.map(_ + pos)
-          val bin  = area.map(neighbor =>
-            if (within(framed, neighbor)) peek(framed, neighbor)
+          val bin  = area.map(cell =>
+            if (within(framed, cell)) peek(framed, cell)
             else canvas)
           algorithm(int(bin))
   
@@ -56,7 +56,7 @@ object Day20 extends App:
   val image1  = enhance(algorithm, image0)
   val answer1 = image1.pixels.map(_.count(_ == true)).sum
   println(s"answer 1: $answer1 [${System.currentTimeMillis - start}ms]")
-  assert(answer2 == 5298)
+  assert(answer1 == 5298)
 
   val image50 = (1 to 50).foldLeft(image0)((img,_) => enhance(algorithm, img))
   val answer2 = image50.pixels.map(_.count(_ == true)).sum
