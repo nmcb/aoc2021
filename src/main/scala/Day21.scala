@@ -87,5 +87,5 @@ object Day21 extends App:
 
   val answer2 = score1.max(score2)
   println(s"answer 2: $answer2 [${System.currentTimeMillis - timestamp}ms]")
-  assert(answer2 == 433315766324816L)
+  assert(answer2 == 433315766324816L) // approx 2min
   

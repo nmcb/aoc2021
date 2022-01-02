@@ -9,69 +9,54 @@ object Day19 extends App:
       .getLines
       .toList
 
-  val VecLit =
-    """([-+]?\d+),([-+]?\d+),([-+]?\d+)""".r
+  import vector.*
 
-  type Vec = (Int,Int,Int)
-
-  object Vec:
-
-    def add(b: Vec)(a: Vec): Vec =
-      (a._1 + b._1, a._2 + b._2, a._3 + b._3)
-
-    def substract(b: Vec)(a: Vec): Vec =
-      (a._1 - b._1, a._2 - b._2, a._3 - b._3)
-
-    def distance(a: Vec)(b: Vec): Int =
-      (b._1 - a._1).abs + (b._2 - a._2).abs + (b._3 - a._3).abs
-
-  case class Scanner(idx: Int, report: Set[Vec])
+  case class Scanner(idx: Int, report: Set[Vec3])
 
   val scanners: List[Scanner] =
     input
-      .foldLeft(List.empty[List[Vec]])((a,l) =>
+      .foldLeft(List.empty[List[Vec3]])((a,l) =>
         if (l.startsWith("--- scanner"))
-          List.empty[Vec] :: a
+          List.empty[Vec3] :: a
         else if (l.isEmpty)
           a
-        else l match
-          case VecLit(x,y,z) => ((x.toInt, y.toInt, z.toInt) :: a.head) :: a.tail
-          case _ => sys.error(s"boom: $l"))
+        else
+          (Vec3.parse(l) :: a.head) :: a.tail
+      )
       .reverse
       .zipWithIndex
       .map((report,index) => Scanner(index, report.toSet))
 
-  def orientations(pos: Vec): Seq[Vec] =
-    val (x, y, z) = pos
+  def orientations(pos: Vec3): Seq[Vec3] =
+    val Vec3(x, y, z) = pos
     Seq(
-         (+x,+y,+z),(-y,+x,+z),(-x,-y,+z),(+y,-x,+z)
-       , (-x,+y,-z),(+y,+x,-z),(+x,-y,-z),(-y,-x,-z)
-       , (-z,+y,+x),(-z,+x,-y),(-z,-y,-x),(-z,-x,+y)
-       , (+z,+y,-x),(+z,+x,+y),(+z,-y,+x),(+z,-x,-y)
-       , (+x,-z,+y),(-y,-z,+x),(-x,-z,-y),(+y,-z,-x)
-       , (+x,+z,-y),(-y,+z,-x),(-x,+z,+y),(+y,+z,+x)
+         Vec3(+x,+y,+z), Vec3(-y,+x,+z), Vec3(-x,-y,+z), Vec3(+y,-x,+z)
+       , Vec3(-x,+y,-z), Vec3(+y,+x,-z), Vec3(+x,-y,-z), Vec3(-y,-x,-z)
+       , Vec3(-z,+y,+x), Vec3(-z,+x,-y), Vec3(-z,-y,-x), Vec3(-z,-x,+y)
+       , Vec3(+z,+y,-x), Vec3(+z,+x,+y), Vec3(+z,-y,+x), Vec3(+z,-x,-y)
+       , Vec3(+x,-z,+y), Vec3(-y,-z,+x), Vec3(-x,-z,-y), Vec3(+y,-z,-x)
+       , Vec3(+x,+z,-y), Vec3(-y,+z,-x), Vec3(-x,+z,+y), Vec3(+y,+z,+x)
        )
 
-  def find(beacons: Set[Vec], scanner: Scanner): Option[(Set[Vec], Vec)] =
-    import Vec.*
+  def find(beacons: Set[Vec3], scanner: Scanner): Option[(Set[Vec3], Vec3)] =
     val result =
       for {
         transposed <- scanner.report.map(orientations).transpose.map(_.toSet)
         local      <- beacons
         remote     <- transposed
-        position = substract(remote)(local)
-        if transposed.map(add(position)).filter(beacons).size >= 10
-      } yield (transposed.map(add(position)), position)
+        position = remote - local
+        if transposed.map(position + _).filter(beacons).size >= 10
+      } yield (transposed.map(position + _), position)
     
     result.headOption
   
-  def solve(scanners: Seq[Scanner]): (Set[Vec], Set[Vec]) = {
+  def solve(scanners: Seq[Scanner]): (Set[Vec3], Set[Vec3]) = {
 
     // todo     -> scanners to match report for
     // known    -> all known beacons in this step
     // found    -> found beacons from last step
     // scanners -> all known scanner positions including scanner 0 
-    def go(todo: Seq[Scanner], known: Set[Vec], found: Set[Vec], scanners: Set[Vec]): (Set[Vec], Set[Vec]) =
+    def go(todo: Seq[Scanner], known: Set[Vec3], found: Set[Vec3], scanners: Set[Vec3]): (Set[Vec3], Set[Vec3]) =
       println(s"todo=${todo.size}, known=${known.size}, found=${found.size}, scanners=${scanners.size}")
       val beacons = known ++ found
       if (todo.isEmpty)
@@ -87,10 +72,9 @@ object Day19 extends App:
           
         val next = todo.filterNot(matched.contains)
         val pack = if (oriented.nonEmpty) oriented.reduce(_ ++ _) else Set.empty
-        val newScannerPoss = scanners ++ positions
         go(next, beacons, pack, scanners ++ positions)
 
-    go(scanners.tail, Set.empty, scanners.head.report, Set((0,0,0)))
+    go(scanners.tail, Set.empty, scanners.head.report, Set(Vec3.origin))
   }
 
   val (beacons, positions) = solve(scanners) 
@@ -103,7 +87,7 @@ object Day19 extends App:
     val distances = for {
       a <- positions
       b <- positions
-    } yield Vec.distance(b)(a)    
+    } yield Vec3.distance(b, a)    
     distances.max
 
   println(s"answer 2: $answer2 [${System.currentTimeMillis - start}ms]")
