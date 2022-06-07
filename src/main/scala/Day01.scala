@@ -1,6 +1,6 @@
 import scala.io._
 
-object Day01 extends App {
+object Day01 extends App:
 
   val start1 = System.currentTimeMillis
 
@@ -23,5 +23,3 @@ object Day01 extends App {
       .toList
 
   println(s"Answer part 2: ${incs(answer2)} [${System.currentTimeMillis - start1}ms]")
-
-}
