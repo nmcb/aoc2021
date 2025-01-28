@@ -42,9 +42,9 @@ object Day04 extends App:
     def lastDraw: A =
       draws.last
     private def hasRowWith(draws: List[A]): Boolean =
-      rows.filter(_.forall(draws.contains _)).nonEmpty
+      rows.exists(_.forall(draws.contains))
     private def hasColumnWith(draws: List[A]): Boolean =
-      rows.transpose.filter(_.forall(draws.contains _)).nonEmpty
+      rows.transpose.exists(_.forall(draws.contains))
 
   object Board:
     def empty[A]: Board[A] =
