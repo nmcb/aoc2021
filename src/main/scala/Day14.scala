@@ -20,10 +20,10 @@ object Day14 extends App:
       )
       .toMap
 
-  def fst[A](pair: (A, _)): A =
+  def fst[A](pair: (A,?)): A =
     pair._1
 
-  def snd[B](pair: (_, B)): B =
+  def snd[B](pair: (?,B)): B =
     pair._2
 
   def step(pairs: Map[(Char, Char), Long], counts: Map[Char, Long]): (Map[(Char, Char), Long], Map[Char, Long]) =
