@@ -1,192 +1,127 @@
-import scala.io._
+import scala.io.Source
 
+/** credits: https://github.com/maneatingape/advent-of-code-scala */
 object Day23 extends App:
-  val timestamp = System.currentTimeMillis
 
-  case class Pod(category: Char, energyUsage: Int)
-
-  val podA1 = Pod('A', 1)
-  val podA2 = Pod('A', 1)
-  val podB1 = Pod('B', 10)
-  val podB2 = Pod('B', 10)
-  val podC1 = Pod('C', 100)
-  val podC2 = Pod('C', 100)
-  val podD1 = Pod('D', 1000)
-  val podD2 = Pod('D', 1000)
-
-  val pods = List(podA1, podA2, podB1, podB2, podC1, podC2, podD1, podD2)
-
-  case class Loc(
-      name: String,
-      goal: Option[Char] = None,
-      capacity: Int,
-      stack: List[Pod],
-      energyUsed: Int = 0,
-    ):
-
-    override def equals(that: Any): Boolean = 
-      that match { case loc: Loc if name == loc.name => true ; case _ => false }
-
-    def pop: (Pod,Loc) =
-      (stack.head, copy(stack = stack.tail))
-
-    def push(p: Pod, steps: Int): Loc =
-      copy(energyUsed = p.energyUsage * steps, stack = p :: stack)
-
-    def isEmpty: Boolean =
-      stack.size == 0
-
-    def nonEmpty: Boolean =
-      !isEmpty
-      
-    def hasSpace: Boolean =
-      stack.size <= capacity
-
-    def happy: Boolean =
-      goal.map(category => stack.forall(_.category == category)).getOrElse(false)
-
-  def go(estate: Estate): List[Estate] =
-    val x = for {
-      source <- estate.locations if source.nonEmpty
-      target <- estate.locations if source != target
-      path   <- estate.paths(source).filter(_.last == target) if (path.forall(_.hasSpace))
-    } yield (source,target)
-    ???
-
-
-  val answer1: Long = ???
-  println(s"Answer 1: $answer1 [${System.currentTimeMillis - timestamp}ms]")
-  assert(answer1 == 1160303042684776L)
-
-
-  // ---
+  val spaceCost = Map('A' -> 1, 'B' -> 10, 'C' -> 100, 'D' -> 1000)
+  val roomIndex = Map('A' -> 2, 'B' -> 4, 'C' -> 6, 'D' -> 8)
 
   case class Estate(
-    hallLeft: Loc  = Loc("hallLeft",  None, 2, List.empty),
-    hallSlot1: Loc = Loc("hallSlot1", None, 1, List.empty),
-    hallSlot2: Loc = Loc("hallSlot2", None, 1, List.empty),
-    hallSlot3: Loc = Loc("hallSlot3", None, 1, List.empty),
-    hallRight: Loc = Loc("hallRight", None, 2, List.empty),
-
-    roomA: Loc = Loc("roomA", Some('A'), 2, List(podB1, podB2)),
-    roomB: Loc = Loc("roomB", Some('B'), 2, List(podA1, podC1)),
-    roomC: Loc = Loc("roomC", Some('C'), 2, List(podA2, podD1)),
-    roomD: Loc = Loc("roomD", Some('D'), 2, List(podD2, podC2))
+    roomMax: Int,
+    cost: Int,
+    hallway: Vector[Char],
+    rooms: Map[Char, Vector[Char]]
   ):
 
-    def move(from: Loc, to: Loc): Estate =
-      ???
+    def finished: Boolean =
+      rooms.forall((kind, room) => room.size == roomMax && room.forall(_ == kind))
 
-    def happy: Boolean =
-      rooms.forall(_.happy)
+  def parsePart1(input: Vector[String]): Estate =
 
-    def totalEnergyUsed: Int =
-      rooms.foldLeft(0)((total,room) => total + room.energyUsed)
+    def parse(column: Int): Vector[Char] =
+      Vector(input(2)(column), input(3)(column))
 
-    val locations: List[Loc] =
-      List(hallLeft, hallRight, hallSlot1, hallSlot2, hallSlot3, hallRight, roomA, roomB, roomC, roomD)
-
-    val rooms: List[Loc] =
-      List(roomA, roomB, roomC, roomD)
-
-    val paths: Map[Loc,Set[List[Loc]]] = Map(
-      hallLeft -> Set(
-        // right
-        List(roomA),
-        List(hallSlot1),
-        List(hallSlot1, roomB),
-        List(hallSlot1, hallSlot2),
-        List(hallSlot1, hallSlot2, roomC),
-        List(hallSlot1, hallSlot2, hallSlot3),
-        List(hallSlot1, hallSlot2, hallSlot3, roomD),
-        List(hallSlot1, hallSlot2, hallSlot3, hallRight)),
-      roomA -> Set(
-        // left
-        List(hallLeft),
-        // right
-        List(hallSlot1),
-        List(hallSlot1, roomB),
-        List(hallSlot1, hallSlot2),
-        List(hallSlot1, hallSlot2, roomC),
-        List(hallSlot1, hallSlot2, hallSlot3),
-        List(hallSlot1, hallSlot2, hallSlot3, roomD),
-        List(hallSlot1, hallSlot2, hallSlot3, hallRight)),
-      hallSlot1 -> Set(
-        // left
-        List(roomA),
-        List(hallLeft),
-        // right
-        List(roomB),
-        List(hallSlot2),
-        List(hallSlot2, roomC),
-        List(hallSlot2, hallSlot3),
-        List(hallSlot2, hallSlot3, roomD),
-        List(hallSlot2, hallSlot3, hallRight)),
-      roomB -> Set(
-        // left
-        List(hallSlot1),
-        List(hallSlot1, roomA),
-        List(hallSlot1, hallLeft),
-        // right
-        List(hallSlot2),
-        List(hallSlot2, roomC),
-        List(hallSlot2, hallSlot3),
-        List(hallSlot2, hallSlot3, roomD),
-        List(hallSlot2, hallSlot3, hallRight)),
-      hallSlot2 -> Set(
-        // left
-        List(roomB),
-        List(hallSlot1),
-        List(hallSlot1, roomA),
-        List(hallSlot1, hallLeft),
-        // right
-        List(roomC),
-        List(hallSlot3),
-        List(hallSlot3, roomD),
-        List(hallSlot3, hallRight)),
-      roomC -> Set(
-        // left
-        List(hallSlot2),
-        List(hallSlot2, roomB),
-        List(hallSlot2, hallSlot1),
-        List(hallSlot2, hallSlot1, roomA),
-        List(hallSlot2, hallSlot1, hallLeft),
-        // right
-        List(hallSlot3),
-        List(hallSlot3, roomD),
-        List(hallSlot3, hallRight)),
-      hallSlot3 -> Set(
-        // left
-        List(roomC),
-        List(hallSlot2),
-        List(hallSlot2, roomB),
-        List(hallSlot2, hallSlot1),
-        List(hallSlot2, hallSlot1, roomA),
-        List(hallSlot2, hallSlot1, hallLeft),
-        // right
-        List(roomD),
-        List(hallRight)),
-      roomD -> Set(
-        // left
-        List(hallSlot3),
-        List(hallSlot3, roomC),
-        List(hallSlot3, hallSlot2),
-        List(hallSlot3, hallSlot2, roomB),
-        List(hallSlot3, hallSlot2, hallSlot1),
-        List(hallSlot1, hallSlot2, hallSlot1, roomA),
-        List(hallSlot3, hallSlot2, hallSlot1, hallLeft),
-        // right
-        List(hallRight)),
-      hallRight -> Set(
-        // left
-        List(roomD),
-        List(hallSlot3),
-        List(hallSlot3, roomC),
-        List(hallSlot3, hallSlot2),
-        List(hallSlot3, hallSlot2, roomB),
-        List(hallSlot3, hallSlot2, hallSlot1),
-        List(hallSlot3, hallSlot2, hallSlot1, roomA),
-        List(hallSlot3, hallSlot2, hallSlot1, hallLeft),
+    Estate(
+      roomMax = 2,
+      cost    = 0,
+      hallway = Vector.fill(11)('.'),
+      rooms   = Map(
+        'A' -> parse(3),
+        'B' -> parse(5),
+        'C' -> parse(7),
+        'D' -> parse(9)
       )
     )
-    
+
+  def parsePart2(input: Vector[String]): Estate =
+
+    def parse(column: Int, second: Char, third: Char): Vector[Char] =
+      Vector(input(2)(column), second, third, input(3)(column))
+
+    Estate(
+      roomMax = 4,
+      cost    = 0,
+      hallway = Vector.fill(11)('.'),
+      rooms   = Map(
+        'A' -> parse(3, 'D', 'D'),
+        'B' -> parse(5, 'C', 'B'),
+        'C' -> parse(7, 'B', 'A'),
+        'D' -> parse(9, 'A', 'C')
+      )
+    )
+
+  def paths(estate: Estate): Vector[Estate] =
+
+    val outside   = estate.hallway.zipWithIndex.filter((amphipod,_) => amphipod != '.')
+    val first     = outside.flatMap(hallwayToRoom(estate))
+    val second    = estate.rooms.flatMap(roomToRoom(estate))
+    val preferred = first ++ second
+
+    if preferred.nonEmpty then
+      preferred
+    else
+      estate.rooms.flatMap(roomToHallway(estate)).toVector
+
+  def hallwayToRoom(current: Estate)(amphipod: Char, start: Int): Option[Estate] =
+
+    val end   = roomIndex(amphipod)
+    val range = if start < end then (start + 1) to end else end to (start - 1)
+
+    if current.rooms(amphipod).forall(_ == amphipod) && range.forall(n => current.hallway(n) == '.') then
+      val nhallway = current.hallway.updated(start, '.')
+      val nrooms   = current.rooms.updated(amphipod, current.rooms(amphipod).prepended(amphipod))
+      val ncost    = current.cost + (range.size + current.roomMax - current.rooms(amphipod).size) * spaceCost(amphipod)
+      Some(Estate(current.roomMax, ncost, nhallway, nrooms))
+    else None
+
+  def roomToRoom(current: Estate)(key: Char, room: Vector[Char]): Vector[Estate] =
+    if room.forall(_ == key) then return Vector.empty
+
+    val start = roomIndex(key)
+    val end   = roomIndex(room.head)
+    val range = if start < end then start to end else end to start
+
+    if current.rooms(room.head).forall(_ == room.head) && range.forall(n => current.hallway(n) == '.') then
+      val nrooms = current.rooms
+        .updated(key, room.tail)
+        .updated(room.head, current.rooms(room.head).prepended(room.head))
+      val ncost = current.cost + (range.size + current.roomMax - current.rooms(key).size + current.roomMax - current.rooms(room.head).size) * spaceCost(room.head)
+      Vector(Estate(current.roomMax, ncost, current.hallway, nrooms))
+    else Vector.empty
+
+  def roomToHallway(current: Estate)(key: Char, room: Vector[Char]): Vector[Estate] =
+    if room.forall(_ == key) then return Vector.empty
+
+    val index = roomIndex(key)
+    val valid = Vector(0, 1, 3, 5, 7, 9, 10)
+    val left  = valid.filter(_ < index).reverse.takeWhile(n => current.hallway(n) == '.')
+    val right = valid.filter(_ > index).takeWhile(n => current.hallway(n) == '.')
+
+    (left.reverse ++ right)
+      .map: pos =>
+        val nhallway = current.hallway.updated(pos, room.head)
+        val nrooms   = current.rooms.updated(key, room.tail)
+        val ncost    = current.cost + ((pos - index).abs + 1 + current.roomMax - room.size) * spaceCost(room.head)
+        Estate(current.roomMax, ncost, nhallway, nrooms)
+
+  def shuffle(burrow: Estate): Option[Int] =
+
+    def move(current: Estate, energy: Option[Int]): Option[Int] =
+      if current.finished then
+        Some(current.cost)
+      else if energy.exists(_ < current.cost) then
+        None
+      else
+        paths(current).flatMap(move(_,energy)).minOption
+
+    move(burrow, None)
+
+  val input: Vector[String] = Source.fromResource("input23.txt").getLines.toVector
+
+  val start1: Long = System.currentTimeMillis
+  val answer1: Int = shuffle(parsePart1(input)).get
+  println(s"answer 1: $answer1 [${System.currentTimeMillis - start1}ms]")
+
+  val start2: Long = System.currentTimeMillis
+  val answer2: Int = shuffle(parsePart2(input)).get
+  println(s"answer 2: $answer2 [${System.currentTimeMillis - start2}ms]")
