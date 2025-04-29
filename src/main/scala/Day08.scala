@@ -5,7 +5,7 @@ object Day08 extends App:
 
   val lines =
     Source
-      .fromFile("src/resources/input08.txt")
+      .fromFile("src/main/resources/input08.txt")
       .getLines
       .map(line =>
         val input  = line.split("\\|")(0).trim.split(" ").toList

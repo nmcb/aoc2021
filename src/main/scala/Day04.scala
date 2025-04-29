@@ -5,7 +5,7 @@ object Day04 extends App:
 
   val draws =
     Source
-      .fromFile("src/resources/input04.txt")
+      .fromFile("src/main/resources/input04.txt")
       .getLines
       .toList(0).trim.split(",").map(_.trim.toInt)
       .toList
@@ -15,7 +15,7 @@ object Day04 extends App:
 
   def boards =
     Source
-      .fromFile("src/resources/input04.txt")
+      .fromFile("src/main/resources/input04.txt")
       .getLines
       .drop(2)
       .toList

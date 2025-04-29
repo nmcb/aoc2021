@@ -49,7 +49,7 @@ object Day20 extends App:
 
   val input =
     io.Source
-      .fromFile("src/resources/input20.txt")
+      .fromFile("src/main/resources/input20.txt")
       .mkString
 
   val (algorithm, image0) = parse(input)

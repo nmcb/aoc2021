@@ -5,7 +5,7 @@ object Day19 extends App:
 
   val input: List[String] =
     Source
-      .fromFile("src/resources/input19.txt")
+      .fromFile("src/main/resources/input19.txt")
       .getLines
       .toList
 

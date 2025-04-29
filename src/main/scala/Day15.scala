@@ -4,7 +4,7 @@ object Day15 extends App:
 
   val lines: Seq[String] =
     Source
-      .fromFile("src/resources/input15.txt")
+      .fromFile("src/main/resources/input15.txt")
       .getLines
       .toSeq
 

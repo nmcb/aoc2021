@@ -32,7 +32,7 @@ object Day02 extends App:
 
   val instructions: List[Inst] =
     Source
-      .fromFile("src/resources/input02.txt")
+      .fromFile("src/main/resources/input02.txt")
       .getLines
       .map(Inst.fromLine)
       .toList

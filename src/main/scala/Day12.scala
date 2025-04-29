@@ -8,7 +8,7 @@ object Day12 extends App:
 
   val graph: List[(Node,Node)] =
     Source
-      .fromFile("src/resources/input12.txt")
+      .fromFile("src/main/resources/input12.txt")
       .getLines
       .map(l => l.split("-").toList).toList
       .flatMap(st => List((Node(st(0)),Node(st(1))), (Node(st(1)),Node(st(0)))))

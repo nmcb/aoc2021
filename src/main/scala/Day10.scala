@@ -1,14 +1,12 @@
 import scala.io._
 import scala.quoted.Expr
 
-def ﷽[A](a: A): A = a
-
 object Day10 extends App:
   val start = System.currentTimeMillis
 
   val lines =
     Source
-      .fromFile("src/resources/input10.txt")
+      .fromFile("src/main/resources/input10.txt")
       .getLines
       .toList
 

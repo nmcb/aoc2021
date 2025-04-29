@@ -53,7 +53,7 @@ object Day24A extends App:
     import Inst.*
 
     Source
-      .fromFile("src/resources/input24.txt")
+      .fromFile("src/main/resources/input24.txt")
       .getLines
       .toList
       .map(_.trim)

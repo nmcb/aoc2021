@@ -7,7 +7,7 @@ object Day09 extends App:
 
   val floor =
     Floor(Source
-      .fromFile("src/resources/input09.txt")
+      .fromFile("src/main/resources/input09.txt")
       .getLines
       .toList
       .map(line => line.toList.map(_.toString.toInt)))
