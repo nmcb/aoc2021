@@ -6,7 +6,7 @@ object Day06 extends App:
 
   val init: Map[Int,Long] =
     Source
-      .fromFile("src/resources/input06.txt")
+      .fromFile("src/main/resources/input06.txt")
       .getLines
       .toList
       .flatMap(_.split(",").map(_.trim.toInt))

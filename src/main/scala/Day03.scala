@@ -8,7 +8,7 @@ object Day03 extends App:
 
   val diagnostics =
     Source
-      .fromFile("src/resources/input03.txt")
+      .fromFile("src/main/resources/input03.txt")
       .getLines
       .map(_.toList)
       .toList

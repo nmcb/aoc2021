@@ -9,7 +9,7 @@ object Day05 extends App:
 
   val lines =
     Source
-      .fromFile("src/resources/input05.txt")
+      .fromFile("src/main/resources/input05.txt")
       .getLines
       .toList
       .map(_.trim)

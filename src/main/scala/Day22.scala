@@ -10,7 +10,7 @@ object Day22 extends App:
 
   val steps1: Seq[Step1] =
     Source
-      .fromFile("src/resources/input22.txt")
+      .fromFile("src/main/resources/input22.txt")
       .getLines
       .toSeq
       .map(_.trim)
@@ -123,7 +123,7 @@ object Day22 extends App:
 
   lazy val steps2 =
     Source
-      .fromFile("src/resources/input22.txt")
+      .fromFile("src/main/resources/input22.txt")
       .getLines
       .map {
         case StepLit(on, x0, x1, y0, y1, z0, z1) =>

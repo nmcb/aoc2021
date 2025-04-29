@@ -2,24 +2,23 @@ import scala.io._
 
 object Day01 extends App:
 
-  val start1 = System.currentTimeMillis
+  val day: String =
+    getClass.getSimpleName.filter(_.isDigit)
 
   val depths: List[Int] =
     Source
-      .fromFile("src/resources/input01.txt")
+      .fromResource(s"input$day.txt")
       .getLines
-      .map(_.trim.toInt)
+      .map(_.toInt)
       .toList
   
-  def incs(l: List[Int]): Int =
+  def solve(l: List[Int]): Int =
     l.sliding(2).count(l => l(1) > l(0))
 
-  println(s"Answer part 1: ${incs(depths)} [${System.currentTimeMillis - start1}ms]")
+  val start1 = System.currentTimeMillis
+  val answer1: Int = solve(depths)
+  println(s"Answer part 1: ${answer1} [${System.currentTimeMillis - start1}ms]")
 
-  val answer2: List[Int] =
-    depths
-      .sliding(3)
-      .map(_.sum)
-      .toList
-
-  println(s"Answer part 2: ${incs(answer2)} [${System.currentTimeMillis - start1}ms]")
+  val start2 = System.currentTimeMillis
+  val answer2: Int = solve(depths.sliding(3).map(_.sum).toList)
+  println(s"Answer part 2: ${answer2} [${System.currentTimeMillis - start2}ms]")

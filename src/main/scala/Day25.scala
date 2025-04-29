@@ -42,7 +42,7 @@ object Day25 extends App:
 
   val floor =
     val tiles = Source
-      .fromFile("src/resources/input25.txt")
+      .fromFile("src/main/resources/input25.txt")
       .getLines
       .zipWithIndex
       .foldLeft(Map.empty[Pos,Char]){ case (a,(l,y)) =>

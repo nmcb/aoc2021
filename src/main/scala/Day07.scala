@@ -5,7 +5,7 @@ object Day07 extends App:
 
   val positions: List[Int] =
     Source
-      .fromFile("src/resources/input07.txt")
+      .fromFile("src/main/resources/input07.txt")
       .getLines
       .toList
       .flatMap(_.split(",").map(_.trim.toInt))

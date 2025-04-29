@@ -7,7 +7,7 @@ object Day11 extends App:
 
   val octos =
     Octopuses(Source
-      .fromFile("src/resources/input11.txt")
+      .fromFile("src/main/resources/input11.txt")
       .getLines
       .map(_.map(_.toString.toInt).toList)
       .zipWithIndex.flatMap((row, y) =>

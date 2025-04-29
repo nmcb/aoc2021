@@ -5,7 +5,7 @@ object Day13 extends App:
 
   val dots =
     Source
-      .fromFile("src/resources/input13.txt")
+      .fromFile("src/main/resources/input13.txt")
       .getLines
       .map(_.trim)
       .takeWhile(_ != "")
@@ -16,7 +16,7 @@ object Day13 extends App:
   val folds =
     val prefix = "fold along"
     Source
-      .fromFile("src/resources/input13.txt")
+      .fromFile("src/main/resources/input13.txt")
       .getLines
       .map(_.trim)
       .dropWhile(!_.startsWith(prefix))
