@@ -1,43 +1,50 @@
-import scala.io._
+import scala.annotation.*
+import scala.io.*
 
 object Day03 extends App:
-  val start = System.currentTimeMillis
+
+  val day: String =
+    getClass.getSimpleName.filter(_.isDigit).mkString("")
 
   val Zero = '0'
   val One  = '1'
 
   val diagnostics =
     Source
-      .fromFile("src/main/resources/input03.txt")
+      .fromResource(s"input$day.txt")
       .getLines
       .map(_.toList)
       .toList
 
   def mostCommon(l: List[Char]): Char =
-    val zeros = l.count(_ == Zero)
-    val ones  = l.count(_ == One)
-    if (zeros > ones) Zero else One
+    if l.count(_ == Zero) > l.count(_ == One) then Zero else One
 
   def leastCommon(l: List[Char]): Char =
-    val zeros = l.count(_ == Zero)
-    val ones  = l.count(_ == One)
-    if (zeros > ones) One else Zero
+    if l.count(_ == Zero) > l.count(_ == One) then One else Zero
+
+  val start1  = System.currentTimeMillis
 
   val gamma   = Integer.parseInt(diagnostics.transpose.map(mostCommon).mkString, 2)
   val epsilon = Integer.parseInt(diagnostics.transpose.map(leastCommon).mkString, 2)
+  val answer1 = gamma * epsilon
   
-  println(s"Answer 1 = ${gamma * epsilon} [${System.currentTimeMillis - start}ms]")
+  println(s"Day$day answer 1 = ${answer1} [${System.currentTimeMillis - start1}ms]")
 
 
-  def find(bits: List[List[Char]], idx: Int = 0)(commonOf: List[Char] => Char): Int =
-    val next =
-      bits.filter(bit => bit(idx) == commonOf(diagnostics.transpose.apply(idx)))
-    if (next.length == 1)
-      Integer.parseInt(next.head.mkString, 2)
-    else
-      find(next, idx + 1)(commonOf)
+  def filter(bits: List[List[Char]], commonOf: List[Char] => Char): Int =
+    def find(todo: List[List[Char]], idx: Int = 0): Int =
+      if todo.length == 1 then
+        Integer.parseInt(todo.head.mkString, 2)
+      else
+        val select = commonOf(todo.transpose.apply(idx))
+        val next   = todo.filter(bit => bit(idx) == select)
+        find(next, idx + 1)
+    find(bits)
 
-  val oxygenRating       = find(diagnostics)(mostCommon)
-  val co2SchrubberRating = find(diagnostics)(leastCommon)
+  val start2 = System.currentTimeMillis
 
-  println(s"Answer 2 = ${oxygenRating * co2SchrubberRating} [${System.currentTimeMillis - start}ms]")
+  val oxygenRating       = filter(diagnostics, mostCommon)
+  val co2SchrubberRating = filter(diagnostics, leastCommon)
+  val answer2            = oxygenRating * co2SchrubberRating
+
+  println(s"Day$day answer 2 = ${answer2} [${System.currentTimeMillis - start2}ms]")
