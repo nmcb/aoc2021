@@ -3,6 +3,8 @@ import scala.io.Source
 /** credits: https://github.com/maneatingape/advent-of-code-scala */
 object Day23 extends App:
 
+  val day = getClass.getSimpleName.filter(_.isDigit).mkString
+
   val spaceCost = Map('A' -> 1, 'B' -> 10, 'C' -> 100, 'D' -> 1000)
   val roomIndex = Map('A' -> 2, 'B' -> 4, 'C' -> 6, 'D' -> 8)
 
@@ -120,8 +122,8 @@ object Day23 extends App:
 
   val start1: Long = System.currentTimeMillis
   val answer1: Int = shuffle(parsePart1(input)).get
-  println(s"answer 1: $answer1 [${System.currentTimeMillis - start1}ms]")
+  println(s"Day $day answer 1: $answer1 [${System.currentTimeMillis - start1}ms]")
 
   val start2: Long = System.currentTimeMillis
   val answer2: Int = shuffle(parsePart2(input)).get
-  println(s"answer 2: $answer2 [${System.currentTimeMillis - start2}ms]")
+  println(s"Day $day answer 2: $answer2 [${System.currentTimeMillis - start2}ms]")
