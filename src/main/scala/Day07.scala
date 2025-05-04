@@ -1,28 +1,34 @@
 import scala.io._
 
 object Day07 extends App:
-  val start = System.currentTimeMillis
 
-  val positions: List[Int] =
+  val day = getClass.getSimpleName.filter(_.isDigit).mkString
+
+  val positions: Vector[Int] =
     Source
-      .fromFile("src/main/resources/input07.txt")
-      .getLines
-      .toList
-      .flatMap(_.split(",").map(_.trim.toInt))
+      .fromResource(s"input$day.txt")
+      .mkString
+      .trim
+      .split(",")
+      .map(_.toInt)
+      .toVector
 
-  def fuelConsumptionTo(target: Int): Int =
-    positions.foldLeft(0)((acc,pos) =>
-      val steps = math.abs(target - pos)
-      val total = (1 to steps).foldLeft(0)((fuel,step) => (fuel + step))
-      acc + total)
+  extension (positions: Vector[Int])
 
-  val answer =
-    println(s"Calculating fuel consumption for ${positions.max} position targets\n")
-    (1 to positions.max).map(pos => {
-      val fuel = fuelConsumptionTo(pos)
-      println(s"\u001b[FTarget position $pos consumes $fuel fuel")
-      fuel
-    }).min
+    def fuelConsumptionTo1(target: Int): Int =
+      positions.map(pos => (target - pos).abs).sum
 
-  println(s"Answer = ${answer} [${System.currentTimeMillis - start}ms]")
-  assert(answer == 91257582)
+    def fuelConsumptionTo2(target: Int): Int =
+      positions.map(pos => (1 to (target - pos).abs).sum).sum
+
+    def solve(fuelTo: Vector[Int] => Int => Int): Int =
+      (positions.min to positions.max).map(fuelTo(positions)).min
+
+
+  val start1 = System.currentTimeMillis
+  val answer1 = positions.solve(_.fuelConsumptionTo1)
+  println(s"Day $day answer = ${answer1} [${System.currentTimeMillis - start1}ms]")
+
+  val start2 = System.currentTimeMillis
+  val answer2 = positions.solve(_.fuelConsumptionTo2)
+  println(s"Day $day answer = ${answer2} [${System.currentTimeMillis - start2}ms]")
