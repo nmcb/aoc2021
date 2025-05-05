@@ -1,31 +1,36 @@
-import scala.io._
+import scala.annotation.tailrec
+import scala.io.Source
 
 object Day08 extends App:
-  val start = System.currentTimeMillis
+
+  val day = getClass.getSimpleName.filter(_.isDigit).mkString
 
   val lines =
     Source
-      .fromFile("src/main/resources/input08.txt")
+      .fromResource(s"input$day.txt")
       .getLines
       .map(line =>
         val input  = line.split("\\|")(0).trim.split(" ").toList
         val output = line.split("\\|")(1).trim.split(" ").toList
         (input, output))
       .toList
-        
-  val answer1 =
-    lines.map((_,output) => 
-      output.filter(digit =>
-        val is1 = digit.length == 2
-        val is7 = digit.length == 3
-        val is4 = digit.length == 4
-        val is8 = digit.length == 7
-        is1 || is4 || is7 || is8
-      ).size
-    ).sum
 
-  println(s"Answer 1 = ${answer1} [${System.currentTimeMillis - start}ms]")
-  assert(answer1 == 521)
+
+  val start1  = System.currentTimeMillis
+
+  val answer1 =
+    lines
+      .map: (_,output) =>
+        output.count: digit =>
+          val is1 = digit.length == 2
+          val is7 = digit.length == 3
+          val is4 = digit.length == 4
+          val is8 = digit.length == 7
+          is1 || is4 || is7 || is8
+      .sum
+
+
+  println(s"Day $day answer 1 = ${answer1} [${System.currentTimeMillis - start1}ms]")
 
   val leds0 = Set(0,1,2,4,5,6)
   val leds1 = Set(2,5)
@@ -55,9 +60,11 @@ object Day08 extends App:
     else None
 
   def valid(wiring: Wiring)(input: List[String]): Boolean =
-    def loop(inputToDo: List[String], digitsFound: Set[Int] = Set.empty): Boolean =
-      val allDigits: Set[Int] =
-        Set(0,1,2,3,4,5,6,7,8,9)
+
+    @tailrec
+    def loop(todo: List[String], digitsFound: Set[Int] = Set.empty): Boolean =
+
+      val allDigits: Set[Int] = Set(0,1,2,3,4,5,6,7,8,9)
 
       def inDigitsFound(digit: Int): Boolean =
         digitsFound.contains(digit)
@@ -65,7 +72,7 @@ object Day08 extends App:
       def notInDigitsLeftToValidate(digit: Int): Boolean =
         !(allDigits -- digitsFound).contains(digit)
 
-      inputToDo match
+      todo match
         case Nil => digitsFound == allDigits
         case encoding :: encodings => decode(wiring)(encoding) match
           case None => false
@@ -75,27 +82,33 @@ object Day08 extends App:
 
     loop(input)
 
-  lazy val answer2: Long =
-    val init: List[Wiring] =
-      "abcdefg".permutations.toList
+
+  val start2  = System.currentTimeMillis
+  val answer2 =
 
     def search(wirings: List[String])(input: List[String]): String =
       val wiring = wirings.head
-      if (valid(wiring)(input)) 
+      if valid(wiring)(input) then
         wiring
       else 
         search(wirings.tail)(input)
 
+    val init: List[Wiring] =
+      "abcdefg".permutations.toList
+
     val numbers: List[Int] =
-      lines.zipWithIndex.map { case ((input,output),idx) =>
-        val wiring = search(init)(input)
-        val number = output.foldLeft("")((num,digit) => num + decode(wiring)(digit).get).toInt
-          
-        println(s"\u001b[FLine $idx encodes number $number")
-        number
-      }
+      lines.zipWithIndex.map:
+        case ((input,output),idx) =>
+          val wiring: Wiring =
+            search(init)(input)
+          val number: Int =
+            output
+              .foldLeft(""): (num,digit) =>
+                num + decode(wiring)(digit).get
+              .toInt
+          number
+
     numbers.sum
 
-  println()
-  println(s"\u001b[FAnswer 2 = ${answer2} [${System.currentTimeMillis - start}ms]")
+  println(s"Day $day answer 2 = ${answer2} [${System.currentTimeMillis - start2}ms]")
   assert(answer2 == 1016804)
