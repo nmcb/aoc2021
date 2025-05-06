@@ -1,71 +1,75 @@
 import scala.io._
 
 object Day09 extends App:
-  val start = System.currentTimeMillis
 
-  def ﷽[A](a: A): A = a
+  val day = getClass.getSimpleName.filter(_.isDigit).mkString
 
   val floor =
-    Floor(Source
-      .fromFile("src/main/resources/input09.txt")
-      .getLines
-      .toList
-      .map(line => line.toList.map(_.toString.toInt)))
+    Floor(
+      Source
+        .fromResource(s"input$day.txt")
+        .getLines
+        .toList
+        .map(line => line.toList.map(_.toString.toInt))
+    )
+
+  type Pos = (Int,Int)
+
+  extension (p: (Int,Int))
+    def x: Int = p._1
+    def y: Int = p._2
 
   case class Floor(loc: List[List[Int]]):
-    val maxX = loc.head.size
-    val maxY = loc.size
+    val sizeX = loc.head.size
+    val sizeY = loc.size
 
     def sample(x: Int, y: Int): Option[Int] =
-      if (y < 0 || y >= maxY) None
-      else if (x < 0 || x >= maxX) None
-      else Some(loc(y)(x))
+      Option.when(x >= 0 && x < sizeX && y >= 0 && y < sizeY)(loc(y)(x))
 
     def height(x: Int, y: Int): Int =
-      sample(x,y).getOrElse(sys.error("boom!"))
+      sample(x,y).getOrElse(sys.error(s"index out of bounds: ($x,$y)"))
 
-    def neighbourHeights(x: Int, y: Int): List[((Int,Int), Int)] =
+    def neighbourHeights(x: Int, y: Int): List[(Pos,Int)] =
       List((1,0),(-1,0),(0,1),(0,-1))
-        .map((nx,ny) => ((nx,ny), sample(x + nx, y + ny)))
-        .filterNot(_._2 == None)
-        .map((l,h) => ((x + l._1,y + l._2),h.get))
+        .map((nx,ny) => (x + nx, y + ny))
+        .flatMap(p => sample(p.x, p.y).map(h => p -> h))
 
-    def upstream(x: Int, y: Int): List[(Int,Int)] =
+    def upstream(x: Int, y: Int): List[Pos] =
       neighbourHeights(x,y)
-        // FIX two adjecent of same height
-        .filter((l,nh) => (nh < 9) && (nh > height(x,y)))
-        .map(_._1)
-        
+        .filter((_,nh) => nh < 9 && nh > height(x,y))
+        .map((n,_) => n)
+
   val heights =
-    var result: List[((Int,Int),Int)] = List.empty // shoot me!
-    for (x <- (0 until floor.maxX) ; y <- (0 until floor.maxY)) {
-      val height = floor.height(x, y)
-      if (floor.neighbourHeights(x, y).forall { case ((nx,ny),nh) => height < nh })
+    var result: List[(Pos,Int)] = List.empty
+    for
+      x <- 0 until floor.sizeX
+      y <- 0 until floor.sizeY
+    do
+      val height = floor.height(x,y)
+      if floor.neighbourHeights(x,y).forall((_,nh) => height < nh) then
         result = ((x,y), height) :: result
-      else
-        ()
-    }
     result
 
+  val start1  = System.currentTimeMillis
   val answer1 = heights.map((_,h) => h + 1).sum
-  println(s"Answer 1 = ${answer1} [${System.currentTimeMillis - start}ms]")
-  assert(answer1 == 502)
+  println(s"Answer 1 = ${answer1} [${System.currentTimeMillis - start1}ms]")
 
-  val answer2: Int = 
-    def loop(todo: List[(Int,Int)], acc: List[(Int,Int)] = List.empty): Int =
-      if (todo.isEmpty)
+  val start2  = System.currentTimeMillis
+  val answer2 =
+    def loop(todo: List[Pos], acc: List[Pos] = List.empty): Int =
+      if todo.isEmpty then
         acc.size
       else
-        val (x, y)   = todo.head
-        val upstream = floor.upstream(x, y)
+        val (x,y) = todo.head
+        val upstream = floor.upstream(x,y)
         loop(upstream ++ todo.tail, ((x,y) :: acc).distinct)
     
     heights
-      .map((point,_) => loop(List((point._1,point._2))))
+      .map((point,_) => loop(List((point.x,point.y))))
       .sorted
       .reverse
       .take(3)
       .product
 
-  println(s"Answer 2 = ${answer2} [${System.currentTimeMillis - start}ms]")
+  println(s"Answer 2 = ${answer2} [${System.currentTimeMillis - start2}ms]")
   assert(answer2 == 1330560)
