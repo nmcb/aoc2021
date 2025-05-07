@@ -1,84 +1,67 @@
-import scala.io._
-import scala.quoted.Expr
+import scala.annotation.tailrec
+import scala.io.Source
+
 
 
 object Day11 extends App:
-  val start = System.currentTimeMillis
 
-  val octos =
-    Octopuses(Source
-      .fromFile("src/main/resources/input11.txt")
+  val day = getClass.getSimpleName.filter(_.isDigit).mkString
+
+  type Octo = (Int,Int)
+
+  extension (octo: Octo)
+    def x = octo._1
+    def y = octo._2
+
+  val input: Map[Octo,Int] =
+    Source
+      .fromResource(s"input$day.txt")
       .getLines
-      .map(_.map(_.toString.toInt).toList)
-      .zipWithIndex.flatMap((row, y) =>
-        row.zipWithIndex.map((level, x) =>
-          (x,y) -> level
-    )).toMap)
+      .zipWithIndex.flatMap: (row,y) =>
+        row.zipWithIndex.map: (level,x) =>
+          (x,y) -> level.toString.toInt
+      .toMap
 
-  case class Octopuses(energies: Map[(Int,Int),Int]):
-    val maxX = energies.keySet.map(_._1).max
-    val maxY = energies.keySet.map(_._2).max
 
-    def asMatrix: List[List[Int]] =
-      (0 to maxY).toList.foldLeft(List.empty)((acc,yi) =>
-        acc :+ (0 to maxX).toList.foldLeft(List.empty)((row,xi) =>
-          row :+ energies.get((xi,yi)).get
-      ))  
+  object Octopuses:
 
-    override def toString: String =
-      asMatrix.foldLeft("")((str,rows) => str + rows.mkString("") + "\n")
+    def make(input: Map[Octo,Int]): Octopuses =
+      def neighboursOf(octo: Octo): List[Octo] =
+        List((-1, -1), (0, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (0, 1), (1, 1))
+          .filter(n => input.keySet.contains((octo.x + n.x, octo.y + n.y)))
+          .map(n => (octo.x + n.x, octo.y + n.y))
+      Octopuses(energies = input, neighbours = input.keys.map(octo => octo -> neighboursOf(octo)).toMap)
 
-    def neighbours(x: Int, y: Int): List[(Int,Int)] =
-      List((-1,-1),(0,-1),(1,-1), (-1,0),(1,0), (-1,1),(0,1),(1,1))
-        .filter((nx, ny) => energies.keySet.contains((x + nx, y + ny))) 
-        .map((nx, ny) => (x + nx, y + ny))
 
-    private def loop(flashes: List[(Int,Int)], acc: Map[(Int,Int),Int], flashed: List[(Int,Int)] = List.empty): (Map[(Int,Int),Int], Int) =
-      if (flashes.isEmpty)
-        // println(s"no more to flash")
-        (acc, flashed.size)
-      else if (flashed.contains(flashes.head))
-        // val (x,y)     = flashes.head
-        // println(s"($x,$y) already flashed")
-        loop(flashes.tail, acc, flashed)
-      else
-        val (x,y)     = flashes.head
-        // println(s"($x,$y) propagating to neighbours : ${neighbours(x,y)}")
-        val update    = neighbours(x,y).map(octo => octo -> (acc.get(octo).get + 1)).toMap
-        // println(s"($x,$y) update : $update")
-        val propagate = update.filter((_,level) => level > 9).keySet.toList
-        // println(s"($x,$y) propagate : $propagate")
-        loop(propagate ++ flashes.tail, acc ++ update, ((x,y)) :: flashed)
+  case class Octopuses(energies: Map[Octo,Int], neighbours: Map[Octo,List[Octo]], flashed: Int = 0):
 
-    private def normalise: Octopuses =
-      Octopuses(energies.map((o,l) => if (l > 9) (o -> 0) else (o -> l)))
+    private def normaliseEnergies: Octopuses =
+      copy(energies = energies.map((pos, l) => if l > 9 then pos -> 0 else pos -> l))
 
-    def step: (Octopuses, Int) =
-      val updated = energies.map((o,l) => o -> (l + 1))
+    def step: Octopuses =
+      @tailrec
+      def loop(flashes: List[Octo], acc: Map[Octo, Int], flashed: List[Octo] = List.empty): Octopuses =
+        if flashes.isEmpty then
+          copy(energies = acc, flashed = flashed.size)
+        else if flashed.contains(flashes.head) then
+          loop(flashes.tail, acc, flashed)
+        else
+          val pos = flashes.head
+          val update = neighbours(pos).map(octo => octo -> (acc(octo) + 1)).toMap
+          val propagate = update.filter((_, level) => level > 9).keySet.toList
+          loop(propagate ++ flashes.tail, acc ++ update, pos :: flashed)
+
+      val updated = energies.map((pos,l) => pos -> (l + 1))
       val flashes = updated.filter((_,l) => l > 9).keySet.toList.sorted
-      val (propagated, flashed) = loop(flashes, updated)
-      (Octopuses(propagated).normalise, flashed)
+      loop(flashes, updated).normaliseEnergies
 
-  println(s"Before any steps:")
-  println(octos)
+  val octopuses: Octopuses = Octopuses.make(input)
 
-  val answer1 =
-    (1 to 100).foldLeft((octos, 0)){ case ((os,res),ix) =>
-      val (updated, flashed) = os.step
-      println(s"After step : $ix")
-      println(updated)
-      (updated, res + flashed)
-    }._2
+  val start1  = System.currentTimeMillis
+  val answer1 = Iterator.iterate(octopuses)(_.step).take(101).map(_.flashed).sum
+  println(s"Day $day answer 1 = $answer1 [${System.currentTimeMillis - start1}ms]")
 
-  println(s"Answer 1 = ${answer1} [${System.currentTimeMillis - start}ms]")
 
-  val answer2 =
-    (1 to 10000).foldLeft((octos, 0)){ case ((os,res),ix) =>
-      val (updated, flashed) = os.step
-      if (flashed == 100) throw new Exception(s"Answer 2 : $ix")
-      println(s"After step : $ix")
-      println(updated)
-      (updated, res + flashed)
-    }._2
-
-  println(s"Answer 1 = ${answer1} [${System.currentTimeMillis - start}ms]")
+  val start2 = System.currentTimeMillis
+  val answer2 = Iterator.iterate(octopuses)(_.step).takeWhile(_.flashed != 100).size
+  println(s"Day $day answer 2 = $answer2 [${System.currentTimeMillis - start2}ms]")
