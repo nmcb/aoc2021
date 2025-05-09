@@ -51,7 +51,7 @@ object Day15 extends App:
       distTo(from) = 0
       val sourceDist = (from, distTo(from))
       val sortByWeight: Ordering[(Vertex, Int)] = (a, b) => a._2.compareTo(b._2)
-      val queue = mutable.PriorityQueue[(Vertex, Int)](sourceDist)(sortByWeight)
+      val queue = mutable.PriorityQueue[(Vertex, Int)](sourceDist)(using sortByWeight)
 
       while (queue.nonEmpty) {
         val (minDestV, _) = queue.dequeue()
