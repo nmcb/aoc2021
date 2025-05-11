@@ -2,22 +2,26 @@ import scala.io._
 
 object Day14 extends App:
 
-  val lines: Seq[String] =
+  val day = getClass.getSimpleName.filter(_.isDigit).mkString
+
+  type Rules  = Map[(Char,Char),Char]
+  type Pairs  = Map[(Char,Char),Long]
+  type Counts = Map[Char,Long]
+
+  val lines: Vector[String] =
     Source
-      .fromFile("src/main/resources/input14.txt")
+      .fromResource(s"input$day.txt")
       .getLines
-      .toSeq
+      .toVector
 
   val template: String =
-    lines.head.trim
+    lines.head
 
-  val rules: Map[(Char, Char), Char] =
+  val rules: Rules =
     lines
-      .drop(2)
-      .map( line =>
-        val Array(pair,insert) = line.trim.split("->").map(_.trim)
-        (pair.charAt(0), pair.charAt(1)) -> insert.charAt(0)
-      )
+      .collect:
+        case s"$pair -> $insert" =>
+          (pair.charAt(0), pair.charAt(1)) -> insert.charAt(0)
       .toMap
 
   def fst[A](pair: (A,?)): A =
@@ -26,46 +30,45 @@ object Day14 extends App:
   def snd[B](pair: (?,B)): B =
     pair._2
 
-  def step(pairs: Map[(Char, Char), Long], counts: Map[Char, Long]): (Map[(Char, Char), Long], Map[Char, Long]) =
-    ( pairs.toSeq.flatMap((pair, count) =>
-        val c = rules(pair)
-        Seq((fst(pair), c) -> count, (c, snd(pair)) -> count)
-      ).groupMapReduce(fst)(snd)(_ + _)
-    , pairs.foldLeft(counts)((acc, count) =>
-        val char = rules(fst(count))
-        acc.updated(char, acc.getOrElse(char, 0L) + snd(count))
-      ).groupMapReduce(fst)(snd)(_ + _) 
-    )
+  /** maintain a count for sequences of pairs as well as individual molecules */
+  case class Polymer(rules: Rules, pairs: Pairs, counts: Counts):
 
-    
+    def step: Polymer =
 
-  val initPairs: Map[(Char, Char), Long] =
-    template
-      .zip(template.tail)
-      .groupMapReduce(identity)(_ => 1L)(_+_)
+      val nextPairs: Pairs =
+        pairs
+          .toVector
+          .flatMap: (pair,count) =>
+            val char = rules(pair)
+            Vector((fst(pair),char) -> count, (char, snd(pair)) -> count)
+          .groupMapReduce(fst)(snd)(_ + _)
 
-  val initCounts: Map[Char, Long] =
-    template.groupMapReduce(identity)(_ => 1L)(_ + _)
-        
-  def max(counts: Map[Char, Long]) =
-    counts.values.max
-    
-  def min(counts: Map[Char, Long]) =
-    counts.values.min
+      val nextCounts: Counts =
+        pairs
+          .foldLeft(counts): (result,count) =>
+            val char = rules(fst(count))
+            result.updated(char, result(char) + snd(count))
+          .groupMapReduce(fst)(snd)(_ + _)
 
-  val start: Long =
-    System.currentTimeMillis
+      copy(pairs = nextPairs, counts = nextCounts)
 
-  val (pairs1, counts1) =
-    (1 to 10).foldLeft((initPairs, initCounts)) {
-      case ((pairs,counts), index) => step(pairs, counts)
-    }
+  object Polymer:
 
-  println(s"Answer 1 = ${max(counts1) - min(counts1)} [${System.currentTimeMillis - start}ms]")
+    def make(rules: Rules, template: String): Polymer =
+      val pairs  = template.zip(template.tail).groupMapReduce(identity)(_ => 1L)(_+_)
+      val counts = template.groupMapReduce(identity)(_ => 1L)(_ + _)
+      Polymer(rules, pairs, counts)
 
-  val (pairs2, counts2) =
-    (1 to 30).foldLeft((pairs1, counts1)) {
-      case ((pairs,counts), index) => step(pairs, counts)
-    }
+  def solve(polymer: Polymer, iterations: Int): Long =
+    val counts = Iterator.iterate(polymer)(_.step).drop(iterations).next.counts
+    counts.values.max - counts.values.min
 
-  println(s"Answer 2 = ${max(counts2) - min(counts2)} [${System.currentTimeMillis - start}ms]")
+  val polymer = Polymer.make(rules, template)
+
+  val start1  = System.currentTimeMillis
+  val answer1 = solve(polymer, 10)
+  println(s"Day $day answer 1 = $answer1 [${System.currentTimeMillis - start1}ms]")
+
+  val start2  = System.currentTimeMillis
+  val answer2 = solve(polymer, 40)
+  println(s"Day $day answer 2 = $answer2 [${System.currentTimeMillis - start2}ms]")
