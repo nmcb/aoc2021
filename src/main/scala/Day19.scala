@@ -1,35 +1,35 @@
+import scala.annotation.tailrec
 import scala.io.*
 
 object Day19 extends App:
-  val start = System.currentTimeMillis
 
-  val input: List[String] =
-    Source
-      .fromFile("src/main/resources/input19.txt")
-      .getLines
-      .toList
+  val day: String =
+    getClass.getSimpleName.filter(_.isDigit).mkString
 
   import vector.*
 
   case class Scanner(idx: Int, report: Set[Vec3])
 
-  val scanners: List[Scanner] =
-    input
-      .foldLeft(List.empty[List[Vec3]])((a,l) =>
-        if (l.startsWith("--- scanner"))
-          List.empty[Vec3] :: a
-        else if (l.isEmpty)
+  val scanners: Vector[Scanner] =
+    Source
+      .fromResource(s"input$day.txt")
+      .getLines
+      .toList
+      .foldLeft(Vector.empty[Vector[Vec3]])((a,l) =>
+        if l.startsWith("--- scanner") then
+          Vector.empty[Vec3] +: a
+        else if l.isEmpty then
           a
         else
-          (Vec3.parse(l) :: a.head) :: a.tail
+          (Vec3.parse(l) +: a.head) +: a.tail
       )
       .reverse
       .zipWithIndex
       .map((report,index) => Scanner(index, report.toSet))
 
-  def orientations(pos: Vec3): Seq[Vec3] =
+  def orientations(pos: Vec3): Vector[Vec3] =
     val Vec3(x, y, z) = pos
-    Seq(
+    Vector(
          Vec3(+x,+y,+z), Vec3(-y,+x,+z), Vec3(-x,-y,+z), Vec3(+y,-x,+z)
        , Vec3(-x,+y,-z), Vec3(+y,+x,-z), Vec3(+x,-y,-z), Vec3(-y,-x,-z)
        , Vec3(-z,+y,+x), Vec3(-z,+x,-y), Vec3(-z,-y,-x), Vec3(-z,-x,+y)
@@ -40,58 +40,47 @@ object Day19 extends App:
 
   def find(beacons: Set[Vec3], scanner: Scanner): Option[(Set[Vec3], Vec3)] =
     val result =
-      for {
+      for
         transposed <- scanner.report.map(orientations).transpose.map(_.toSet)
         local      <- beacons
         remote     <- transposed
         position = remote - local
-        if transposed.map(position + _).filter(beacons).size >= 10
-      } yield (transposed.map(position + _), position)
+        if transposed.map(position + _).count(beacons) >= 10
+      yield (transposed.map(position + _), position)
     
     result.headOption
   
-  def solve(scanners: Seq[Scanner]): (Set[Vec3], Set[Vec3]) = {
+  def solve(scanners: Vector[Scanner]): (Set[Vec3], Set[Vec3]) =
 
-    // todo     -> scanners to match report for
-    // known    -> all known beacons in this step
-    // found    -> found beacons from last step
-    // scanners -> all known scanner positions including scanner 0 
-    def go(todo: Seq[Scanner], known: Set[Vec3], found: Set[Vec3], scanners: Set[Vec3]): (Set[Vec3], Set[Vec3]) =
-      println(s"todo=${todo.size}, known=${known.size}, found=${found.size}, scanners=${scanners.size}")
+    @tailrec
+    def go(todo: Vector[Scanner], known: Set[Vec3], found: Set[Vec3], scanners: Set[Vec3]): (Set[Vec3], Set[Vec3]) =
       val beacons = known ++ found
-      if (todo.isEmpty)
+      if todo.isEmpty then
         (beacons, scanners)
       else
-        val result = for {
-          scanner                 <- todo
-          (transposed, positions) <- find(found, scanner)
-        } yield (scanner, transposed, positions)
+        val result =
+          for
+            scanner                 <- todo
+            (transposed, positions) <- find(found, scanner)
+          yield (scanner, transposed, positions)
         val matched   = result.map(_._1)
         val oriented  = result.map(_._2)
         val positions = result.map(_._3)
           
         val next = todo.filterNot(matched.contains)
-        val pack = if (oriented.nonEmpty) oriented.reduce(_ ++ _) else Set.empty
+        val pack = if oriented.nonEmpty then oriented.reduce(_ ++ _) else Set.empty
         go(next, beacons, pack, scanners ++ positions)
 
     go(scanners.tail, Set.empty, scanners.head.report, Set(Vec3.origin))
-  }
 
-  val (beacons, positions) = solve(scanners) 
-
+  val start1   = System.currentTimeMillis
+  val (beacons, positions) = solve(scanners)
   val answer1 = beacons.size
-  println(s"answer 1: $answer1 [${System.currentTimeMillis - start}ms]")
-  assert(answer1 == 320)
+  println(s"answer 1: $answer1 [${System.currentTimeMillis - start1}ms]")
 
-  val answer2 =
-    val distances = for {
-      a <- positions
-      b <- positions
-    } yield Vec3.distance(b, a)    
-    distances.max
-
-  println(s"answer 2: $answer2 [${System.currentTimeMillis - start}ms]")
-  assert(answer2 == 9655)
+  val start2  = System.currentTimeMillis
+  val answer2 = (for a <- positions ; b <- positions yield Vec3.distance(b, a)).max
+  println(s"answer 2: $answer2 [${System.currentTimeMillis - start2}ms]")
 
 
   

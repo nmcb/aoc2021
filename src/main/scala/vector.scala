@@ -2,9 +2,6 @@ package vector
 
   import scala.util.*
 
-  val VecLit =
-    """([-+]?\d+),([-+]?\d+),([-+]?\d+)""".r
-
   case class Vec(x: Int, y: Int):
     import Vec.*
 
@@ -20,6 +17,9 @@ package vector
 
   object Vec:
 
+    val VecLit =
+      """([-+]?\d+),([-+]?\d+),([-+]?\d+)""".r
+
     def apply(x: String, y: String): Vec =
       Vec(x.toInt, y.toInt)
 
@@ -29,7 +29,7 @@ package vector
     def parse(s: String): Vec =
       s match
         case VecLit(x, y) => Vec(x, y)
-        case _ => sys.error(s"does not match ${VecLit.regex} : '$s'")
+        case _            => sys.error(s"does not match ${VecLit.regex} : '$s'")
 
     val origin: Vec =
       Vec(0, 0)
@@ -43,9 +43,6 @@ package vector
     def distance(a: Vec, b: Vec): Int =
       (b.x - a.x).abs + (b.y - a.y).abs
 
-  val Vec3Lit =
-    """([-+]?\d+),([-+]?\d+),([-+]?\d+)""".r
-
   case class Vec3(x: Int, y: Int, z: Int):
     import Vec3.*
 
@@ -56,6 +53,9 @@ package vector
       substract(this, that)
 
   object Vec3:
+
+    val Vec3Lit =
+      """([-+]?\d+),([-+]?\d+),([-+]?\d+)""".r
 
     def apply(x: String, y: String, z: String): Vec3 =
       Vec3(x.toInt, y.toInt, z.toInt)
