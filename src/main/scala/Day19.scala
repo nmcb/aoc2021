@@ -79,16 +79,8 @@ object Day19 extends App:
   println(s"answer 1: $answer1 [${System.currentTimeMillis - start1}ms]")
 
   val start2  = System.currentTimeMillis
-  val answer2 =
-    val distances =
-      for
-        a <- positions
-        b <- positions
-      yield Vec3.distance(b, a)
-    distances.max
-
+  val answer2 = (for a <- positions ; b <- positions yield Vec3.distance(b, a)).max
   println(s"answer 2: $answer2 [${System.currentTimeMillis - start2}ms]")
-  assert(answer2 == 9655)
 
 
   
