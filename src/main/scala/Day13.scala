@@ -1,100 +1,65 @@
 import scala.io._
 
 object Day13 extends App:
-  val start = System.currentTimeMillis
 
-  val dots =
+  val day = getClass.getSimpleName.filter(_.isDigit).mkString
+
+  enum Axis:
+    case Ver, Hor
+
+  import Axis.*
+
+  type Dots  = Set[(Int, Int)]
+  type Folds = Vector[(Axis, Int)]
+
+  extension (dot: (Int, Int))
+    def x: Int = dot._1
+    def y: Int = dot._2
+
+  val dots: Dots =
     Source
-      .fromFile("src/main/resources/input13.txt")
+      .fromResource(s"input$day.txt")
       .getLines
-      .map(_.trim)
-      .takeWhile(_ != "")
-      .map(_.split(",").toList)
-      .map(xy => (xy(0).toInt,xy(1).toInt))
-      .toList
+      .collect:
+        case s"$x,$y" => (x.toInt, y.toInt)
+      .toSet
       
-  val folds =
-    val prefix = "fold along"
+  val folds: Folds =
     Source
-      .fromFile("src/main/resources/input13.txt")
+      .fromResource(s"input$day.txt")
       .getLines
-      .map(_.trim)
-      .dropWhile(!_.startsWith(prefix))
-      .map(_.drop(prefix.length).trim)
-      .map(fold =>
-        if      (fold.startsWith("x=")) Fold(fold.drop(2).trim.toInt, "ver")
-        else if (fold.startsWith("y=")) Fold(fold.drop(2).trim.toInt, "hor")
-        else    sys.error(s"unparsable fold=$fold")
-      ).toList
+      .collect:
+        case s"fold along x=$x" => (Ver, x.toInt)
+        case s"fold along y=$y" => (Hor, y.toInt)
+      .toVector
 
-  case class Paper(dots: List[(Int,Int)]):
-    val maxX = dots.map(_._1).max 
-    val maxY = dots.map(_._2).max
+  def origami(dots: Dots, folds: Folds): Dots =
 
-    def count: Int =
-      dots.filter((x,y) => (0 to maxX).contains(x) && (0 to maxY).contains(y)).distinct.size
+    def vertical(line: Int)(x: Int, y: Int): (Int, Int) =
+      (if x < line then x else 2 * line - x, y)
 
-    override def toString: String =
-      (0 to maxY).foldLeft("")((a,y) =>
-        a + (0 to maxX).foldLeft("")((l,x) =>
-          l + (if (dots.contains((x,y))) "#" else ".")
-        ) + "\n" 
-      )
+    def horizontal(line: Int)(x: Int, y: Int): (Int, Int) =
+      (x, if y < line then y else 2 * line - y)
 
-    def fold(f: Fold): Paper =
-      if (f.direction == "hor")
-        val next = (0 until f.line).foldLeft(List.empty[(Int,Int)])((a,y) =>
-          a ++ (0 to maxX).foldLeft(List.empty[(Int,Int)])((l,x) =>
-            val a = dots.find(_ == (x,y))
-            val b = dots.find(_ == (x, 2 * f.line - y))
-            (a,b) match {
-              case (Some(c1), Some(c2)) => l ++ List(c1, (c2._1, 2 * f.line - c2._2))
-              case (Some(c1), None)     => l ++ List(c1)
-              case (None, Some(c2))     => l ++ List((c2._1, 2 * f.line - c2._2))
-              case (None, None)         => l
-            }
-          )
-        )
-        Paper(next.distinct)
-      else
-        val next = (0 until f.line).foldLeft(List.empty[(Int,Int)])((a,x) =>
-          a ++ (0 to maxY).foldLeft(List.empty[(Int,Int)])((l,y) =>
-            val a = dots.find(_ == (x,y))
-            val b = dots.find(_ == (2 * f.line - x, y))
-            (a,b) match {
-              case (Some(c1), Some(c2)) => l ++ List(c1, (2 * f.line - c2._1, c2._2))
-              case (Some(c1), None)     => l ++ List(c1)
-              case (None, Some(c2))     => l ++ List((2 * f.line - c2._1, c2._2))
-              case (None, None)         => l
-            }
-          )
-        )
-        Paper(next.distinct)
+    folds.foldLeft(dots):
+      case (dots, (Ver, line)) => dots.map(vertical(line))
+      case (dots, (Hor, line)) => dots.map(horizontal(line))
 
+  val start1  = System.currentTimeMillis
+  val answer1 = origami(dots, folds.take(1)).size
+  println(s"Day $day answer 1 [${System.currentTimeMillis - start1}ms] = $answer1")
 
-  case class Fold(line: Int, direction: String)
-  
-  println(folds.head)
+  extension (dots: Dots) def asString: String =
+    val buffer = StringBuffer()
+    for y <- 0 to dots.map(_.y).max do
+      buffer.append('\n')
+      for x <- 0 to dots.map(_.x).max do
+        if dots.contains((x,y)) then
+          buffer.append('#')
+        else
+          buffer.append('.')
+    buffer.toString + "\n"
 
-  val paper = Paper(dots)
-  println(paper.maxX)
-  println(paper.maxY)
-  println()
-
-  val folded = paper.fold(folds.head)
-  println(folded.maxX)
-  println(folded.maxY)
-  println(folded.count)
-  println()
-
-  // val folded2 = folded.fold(folds.tail.head)
-  // println(folded2.maxX)
-  // println(folded2.maxY)
-  // println(folded2.count)
-  // println(folded2)
-
-  val run =
-    folds.foldLeft(paper)((p,f) => p.fold(f))
-  println(run)
-
-  // println(s"Answer 1 = ${pathsPart1.size} [${System.currentTimeMillis - start}ms]")
+  val start2  = System.currentTimeMillis
+  val answer2 = origami(dots, folds).asString
+  println(s"Day $day answer 2 [${System.currentTimeMillis - start1}ms] = $answer2")
