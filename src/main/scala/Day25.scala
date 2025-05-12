@@ -1,19 +1,16 @@
+import scala.annotation.tailrec
 import scala.io.*
 
 object Day25 extends App:
-  val start = System.currentTimeMillis
+
+  val day = getClass.getSimpleName.filter(_.isDigit).mkString
 
   case class Pos(x: Int, y: Int):
+    
     def +(that: Pos): Pos =
       Pos(x + that.x, y + that.y)
 
-  case class Floor(tiles: Map[Pos,Char], maxX: Int, maxY: Int):
-    assert(tiles.size == (maxX + 1) * (maxY + 1))
-
-    override def toString: String =
-      (0 to maxY).foldLeft("")((s,y) =>
-        s + "\n" + (0 to maxX).foldLeft("")((ss,x) =>
-          ss + tiles(Pos(x,y)).toString))
+  case class Floor(tiles: Map[Pos,Char], sizeX: Int, sizeY: Int):
 
     def eastFacing: Set[Pos] =
       tiles.filter((p,c) => c == '>').keySet
@@ -22,39 +19,39 @@ object Day25 extends App:
       tiles.filter((p,c) => c == 'v').keySet
     
     def eastOf(p: Pos): Pos =
-      if (p.x < maxX) p + Pos(1,0) else p.copy(x = 0)
+      if p.x < sizeX - 1 then p + Pos(1,0) else p.copy(x = 0)
     
     def southOf(p: Pos): Pos =
-      if (p.y < maxY) p + Pos(0,1) else p.copy(y = 0)
+      if p.y < sizeY - 1 then p + Pos(0,1) else p.copy(y = 0)
 
-    def turn: Floor = //Map[Pos,Char] =
-      val (emove, eremoved) = tiles.partition((p,c) => c == '>')
-      val emoved  = emove.map((p,c) => if (tiles(eastOf(p)) == '.') p -> '.' else p -> c)
-      val eupdate = emove.filter((p,c) => tiles(eastOf(p)) == '.').map((p,c) => eastOf(p) -> c)
-      val entiles = eremoved ++ eupdate ++ emoved
+    def turn: Floor =
+      val (eastMove, eastRemoved) = tiles.partition((_,c) => c == '>')
+      val eastMoved   = eastMove.map((p,c)    => if tiles(eastOf(p)) == '.' then p -> '.' else p -> c)
+      val eastUpdated = eastMove.filter((p,c) => tiles(eastOf(p)) == '.').map((p,c) => eastOf(p) -> c)
+      val eastTiles   = eastRemoved ++ eastUpdated ++ eastMoved
 
-      val (smove, sremoved) = entiles.partition((p,c) => c == 'v')
-      val smoved  = smove.map((p,c) => if (entiles(southOf(p)) == '.') p -> '.' else p -> c)
-      val supdate = smove.filter((p,c) => entiles(southOf(p)) == '.').map((p,c) => southOf(p) -> c)
-      val sntiles = sremoved ++ supdate ++ smoved
-      copy(tiles = sntiles)
-
-
-  val floor =
-    val tiles = Source
-      .fromFile("src/main/resources/input25.txt")
-      .getLines
-      .zipWithIndex
-      .foldLeft(Map.empty[Pos,Char]){ case (a,(l,y)) =>
-        l.zipWithIndex.foldLeft(a) { case (a,(c,x)) =>
-          a + (Pos(x,y) -> c)
-      }}
-    Floor(tiles, tiles.map(_._1.x).max, tiles.map(_._1.y).max)
+      val (southMove, southRemoved) = eastTiles.partition((_,c) => c == 'v')
+      val southMoved   = southMove.map((p,c)    => if eastTiles(southOf(p)) == '.' then p -> '.' else p -> c)
+      val southUpdated = southMove.filter((p,c) => eastTiles(southOf(p)) == '.').map((p,c) => southOf(p) -> c)
+      val southTiles   = southRemoved ++ southUpdated ++ southMoved
+      copy(tiles = southTiles)
 
 
-  def solve(f: Floor, i: Int = 1): Int =
-    val nf = f.turn
-    if (f == nf) i
-    else solve(nf, i + 1)
+  val floor: Floor =
+    val lines = Source.fromResource(s"input$day.txt").getLines.toVector
+    val sizeX = lines.head.size
+    val sizeY = lines.size
+    val tiles = Vector.tabulate(sizeX, sizeY)((x, y) => Pos(x, y) -> lines(y)(x)).flatten.toMap
+    Floor(tiles, sizeX, sizeY)
 
-  println(solve(floor))
+  @tailrec
+  def solve(floor: Floor, i: Int = 1): Int =
+    val next = floor.turn
+    if floor == next then
+      i
+    else
+      solve(next, i + 1)
+
+  val start1  = System.currentTimeMillis
+  val answer1 = solve(floor)
+  println(s"Day $day answer 1: $answer1 [${System.currentTimeMillis - start1}ms]")
